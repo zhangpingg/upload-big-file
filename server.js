@@ -27,7 +27,7 @@ const pipeStream = (path, writeStream) => {
     const readStream = fs.createReadStream(path); // 读取切片文件流
     // 文件读取完成
     readStream.on("end", () => {
-      // fs.unlinkSync(path);  // 同步删除文件
+      fs.unlinkSync(path);  // 同步删除文件
       resolve();
     });
     readStream.pipe(writeStream); // 读取的流，写进目的地的路径
