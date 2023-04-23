@@ -7,7 +7,6 @@ const request = (params: any) => {
       xhr.setRequestHeader(key, headers[key]);
     });
     xhr.send(data);
-
     xhr.onload = (e: any) => {
       return resolve({
         data: e.target.response,

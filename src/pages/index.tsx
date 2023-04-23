@@ -8,7 +8,7 @@
 import { useState } from "react";
 import axios from 'axios';
 import fetch from 'isomorphic-fetch';
-import {request} from '@/utils/request';
+import { request } from '@/utils/request';
 
 const Index = () => {
   const SIZE = 1 * 1024 * 1024; // 切片大小
@@ -35,10 +35,10 @@ const Index = () => {
     await request({
       url: "http://localhost:8100/merge",
       method: 'post',
-      // headers: {
-      //   "content-type": "application/json"[文件：index.js]
-      //   // "Content-type": `multipart/form-data; boundary=----${Math.random()}`
-      // },
+      headers: {
+        "content-type": "application/json"
+        // "Content-type": `multipart/form-data; boundary=----${Math.random()}`
+      },
       data: JSON.stringify({
         filename: container.file.name,
         size: SIZE,

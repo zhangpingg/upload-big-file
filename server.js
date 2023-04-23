@@ -73,10 +73,10 @@ const resolvePost = (req) =>
       resolve(JSON.parse(dataStr)); // { filename: 'Test.zip', size: 1048576 }
     });
   });
-
+/** 读取文件流, 传输合并到目标文件中 */
 const pipeStream = (path, writeStream) => {
   return new Promise((resolve) => {
-    const readStream = fs.createReadStream(path); // 读取文件流
+    const readStream = fs.createReadStream(path); // 读取切片文件流
     // 文件读取完成
     readStream.on("end", () => {
       fs.unlinkSync(path);  // 同步删除文件
