@@ -6,8 +6,9 @@
  */
 
 import { useState } from "react";
-import axios from 'axios'
-import fetch from 'fetch';
+import axios from 'axios';
+import fetch from 'isomorphic-fetch';
+import {request} from '@/utils/request';
 
 const Index = () => {
   const SIZE = 1 * 1024 * 1024; // 切片大小
@@ -32,17 +33,29 @@ const Index = () => {
   }
   /** 合并切片 */
   const mergeRequest = async () => {
-    await fetch('https://localhost:3000/merge', {
-      // url: "http://localhost:3000/merge",
-      mode: 'cors',
-      headers: {
-        "content-type": "application/json"
-        // "content-type": "multipart/form-data"
-      },
+    await request({
+      url: "http://localhost:8100/merge",
+      method: 'post',
+      // headers: {
+      //   "content-type": "application/json"[文件：index.js]
+      //   // "Content-type": `multipart/form-data; boundary=----${Math.random()}`
+      // },
       data: JSON.stringify({
-        filename: container.file.name
+        filename: container.file.name,
+        size: SIZE,
       })
     });
+    // await fetch('https://localhost:3000/merge', {
+    //   method: 'post',
+    //   mode: 'cors',
+    //   headers: {
+    //     "Content-type": "application/json; charset=UTF-8"
+    //     // "Content-type": "multipart/form-data"
+    //   },
+    //   data: JSON.stringify({
+    //     filename: container.file.name
+    //   })
+    // });
   }
   /** 上传切片 */
   const uploadChunks = async (data: any) => {
@@ -56,9 +69,9 @@ const Index = () => {
       })
     const requestList = list
       .map(({ formData }) => {
-        return axios({
-          url: "http://localhost:3000/upload",
-          method: 'get',
+        return request({
+          url: "http://localhost:8100/upload",
+          method: 'post',
           data: formData
         })
       }
