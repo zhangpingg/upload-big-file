@@ -28,7 +28,6 @@ const Index = () => {
       fileChunkList.push({ file: file.slice(cur, cur + size) });
       cur += size;
     }
-    console.log('fileChunkList', fileChunkList);
     return fileChunkList;
   }
   /** 合并切片 */
@@ -59,16 +58,14 @@ const Index = () => {
   }
   /** 上传切片 */
   const uploadChunks = async (data: any) => {
-    const list = data
+    const requestList = data
       .map(({ chunk, hash }) => {
         const formData = new FormData();
         formData.append("chunk", chunk);  // 切片
         formData.append("hash", hash);    // 哈希
         formData.append("filename", container.file.name); // 文件名
         return { formData };
-      })
-    const requestList = list
-      .map(({ formData }) => {
+      }).map(({ formData }) => {
         return request({
           url: "http://localhost:8100/upload",
           method: 'post',
