@@ -6,23 +6,21 @@
  */
 
 import { useState } from "react";
-import axios from 'axios';
-import fetch from 'isomorphic-fetch';
 import { request } from '@/utils/request';
 
 const Index = () => {
   const SIZE = 1 * 1024 * 1024; // 切片大小
-  const [container, setContainer] = useState<any>()
+  const [container, setContainer] = useState<any>();  // 上传的文件（二进制）
 
-  /** change文件 */
-  const handleFileChange = (e) => {
+  /** 上传的文件（本地） */
+  const changeFile = (e) => {
     const [file] = e.target.files;
     if (!file) return;
     setContainer({ file })
   }
-  /** 生成文件切片 */
-  const createFileChunk = (file: any, size = SIZE) => {
-    const fileChunkList = []; // 分片列表
+  /** 创建文件切片: File对象继承自 Blob，所以可以用 Blob.slice()方法将文件切成小块来处理 */
+  const createFileChunk = (file: File, size = SIZE) => {
+    const fileChunkList = []; // 分片(二进制)数组
     let cur = 0;
     while (cur < file.size) {
       fileChunkList.push({ file: file.slice(cur, cur + size) });
@@ -35,10 +33,10 @@ const Index = () => {
     await request({
       url: "http://localhost:8100/merge",
       method: 'post',
-      headers: {
-        "content-type": "application/json"
-        // "Content-type": `multipart/form-data; boundary=----${Math.random()}`
-      },
+      // headers: {
+      //   "content-type": "application/json"
+      //   // "Content-type": `multipart/form-data; boundary=----${Math.random()}`
+      // },
       data: JSON.stringify({
         filename: container.file.name,
         size: SIZE,
@@ -60,7 +58,7 @@ const Index = () => {
   const uploadChunks = async (data: any) => {
     const requestList = data
       .map(({ chunk, hash }) => {
-        const formData = new FormData();
+        const formData = new FormData(); // 处理表单数据
         formData.append("chunk", chunk);  // 切片
         formData.append("hash", hash);    // 哈希
         formData.append("filename", container.file.name); // 文件名
@@ -76,22 +74,21 @@ const Index = () => {
     await Promise.all(requestList); // 并发请求
     await mergeRequest();  // 合并切片
   }
-  /** 上传 */
-  const handleUpload = async () => {
+  /** 文件上传到后台-接口 */
+  const uploadFile = async () => {
     if (!container?.file) return;
     const fileChunkList = createFileChunk(container.file);
-    const _data = fileChunkList.map(({ file }, index) => ({
-      chunk: file,
-      // 文件名 + 数组下标
-      hash: container.file.name + "-" + index
+    const data = fileChunkList.map(({ file }, index) => ({
+      chunk: file,  // 切片(二进制)
+      hash: container.file.name + "-" + index,  // 文件名+下标 Test.zip-0 Test.zip-1...
     }));
-    await uploadChunks(_data);
+    await uploadChunks(data);
   }
 
   return (
     <div>
-      <input type="file" onChange={handleFileChange} />
-      <button onClick={handleUpload}>upload</button>
+      <input type="file" onChange={changeFile} />
+      <button onClick={uploadFile}>上传</button>
     </div>
   );
 }
