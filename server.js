@@ -55,7 +55,7 @@ server.on("request", async (req, res) => {
     return;
   }
   // 每次上传分片请求都会走这里
-  const multipartyInstance = new multiparty.Form(); //  处理前端传来的 formData
+  const multipartyInstance = new multiparty.Form(); // 实例化表单, 处理前端传来的 formData
   // files保存了formData中文件，fields参数保存了formData中非文件的字段
   // 即 fields-哈希,文件名  files-切片信息(即chunck)
   multipartyInstance.parse(req, async (error, fields, files) => {

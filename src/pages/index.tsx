@@ -5,12 +5,12 @@
  *  4)服务器合并切片
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { request } from '@/utils/request';
 
 const Index = () => {
   const SIZE = 1 * 1024 * 1024; // 切片大小
-  const [container, setContainer] = useState<any>();  // 上传的文件（二进制）
+  const [container, setContainer] = useState<any>();  // 上传的文件（是一个二进制的数据）
 
   /** 上传的文件（本地） */
   const changeFile = (e) => {
