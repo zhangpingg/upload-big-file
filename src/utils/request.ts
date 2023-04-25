@@ -2,6 +2,7 @@ const request = (params: any) => {
   const { url, data, method = "post", headers = {}, onProgress } = params;
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
+    // xhr.upload.onprogress = onProgress;
     xhr.open(method, url);
     Object.keys(headers).forEach((key) => {
       xhr.setRequestHeader(key, headers[key]);

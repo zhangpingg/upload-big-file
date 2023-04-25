@@ -5,19 +5,11 @@
  *  4)服务器合并切片
  */
 
-import { useEffect, useState } from "react";
 import { request } from '@/utils/request';
 
-const Index = () => {
-  const SIZE = 1 * 1024 * 1024; // 切片大小
-  const [container, setContainer] = useState<any>();  // 上传的文件（是一个二进制的数据）
+const SIZE = 1 * 1024 * 1024; // 切片大小
 
-  /** 上传的文件（本地） */
-  const changeFile = (e) => {
-    const [file] = e.target.files;
-    if (!file) return;
-    setContainer({ file })
-  }
+const Index = () => {  
   /** 创建文件切片: File对象继承自 Blob，所以可以用 Blob.slice()方法将文件切成小块来处理 */
   const createFileChunk = (file: File, size = SIZE) => {
     const fileChunkList = []; // 分片(二进制)数组
@@ -29,7 +21,7 @@ const Index = () => {
     return fileChunkList;
   }
   /** 合并切片 */
-  const mergeRequest = async () => {
+  const mergeRequest = async (fileName: string) => {
     await request({
       url: "http://localhost:8100/merge",
       method: 'post',
@@ -38,32 +30,21 @@ const Index = () => {
       //   // "Content-type": `multipart/form-data; boundary=----${Math.random()}`
       // },
       data: JSON.stringify({
-        filename: container.file.name,
+        filename: fileName,
         size: SIZE,
       })
     });
-    // await fetch('https://localhost:3000/merge', {
-    //   method: 'post',
-    //   mode: 'cors',
-    //   headers: {
-    //     "Content-type": "application/json; charset=UTF-8"
-    //     // "Content-type": "multipart/form-data"
-    //   },
-    //   data: JSON.stringify({
-    //     filename: container.file.name
-    //   })
-    // });
   }
   /** 上传切片 */
-  const uploadChunks = async (data: any) => {
+  const uploadChunks = async (data: any, fileName: string) => {
     const requestList = data
-      .map(({ chunk, hash }) => {
+      .map(({ chunk, hash }: any) => {
         const formData = new FormData(); // 处理表单数据
         formData.append("chunk", chunk);  // 切片
         formData.append("hash", hash);    // 哈希
-        formData.append("filename", container.file.name); // 文件名
+        formData.append("filename", fileName); // 文件名
         return { formData };
-      }).map(({ formData }) => {
+      }).map(({ formData }: any) => {
         return request({
           url: "http://localhost:8100/upload",
           method: 'post',
@@ -72,23 +53,22 @@ const Index = () => {
       }
       );
     await Promise.all(requestList); // 并发请求
-    await mergeRequest();  // 合并切片
+    await mergeRequest(fileName);  // 合并切片
   }
-  /** 文件上传到后台-接口 */
-  const uploadFile = async () => {
-    if (!container?.file) return;
-    const fileChunkList = createFileChunk(container.file);
-    const data = fileChunkList.map(({ file }, index) => ({
-      chunk: file,  // 切片(二进制)
-      hash: container.file.name + "-" + index,  // 文件名+下标 Test.zip-0 Test.zip-1...
+  /** 选择文件 */
+  const changeFile = async (e: any) => {
+    const [file] = e.target.files;  // 上传的文件（是一个二进制的数据）
+    const fileChunkList = createFileChunk(file);
+    const data = fileChunkList.map(({ file: chunkFile }, index) => ({
+      chunk: chunkFile,  // 切片(二进制)
+      hash: `${file.name}-${index}`,  // 文件名+下标 Test.zip-0 Test.zip-1...
     }));
-    await uploadChunks(data);
+    await uploadChunks(data, file.name);
   }
 
   return (
     <div>
       <input type="file" onChange={changeFile} />
-      <button onClick={uploadFile}>上传</button>
     </div>
   );
 }
