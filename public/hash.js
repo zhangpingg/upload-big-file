@@ -1,6 +1,6 @@
 // spark-md5.min.js 根据文件内容计算出文件的 hash 值
 
-self.importScripts("./spark_md5.min.js");
+self.importScripts("./spark_md5.min.js"); // 导入脚本
 
 // worker线程：接受信息，生成hash
 self.onmessage = (e) => {
