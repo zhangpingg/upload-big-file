@@ -1,22 +1,32 @@
 import { useRef, useState } from 'react';
-import SparkMD5 from 'spark-md5';
+import { Form, Input, Button } from 'antd';
+import 'antd/dist/antd.css';
 
+// 表单（输入框+文件） FormData
 const Index = () => {
-  const changeFile = (e: any) => {
-    // 创建md5实例（因为创建是ArrayBuffer，所以下面接收的也是这种）
-    const spark = new SparkMD5.ArrayBuffer();
-    const reader = new FileReader();
-    reader.readAsArrayBuffer(e.target.files[0]);  // 把Blob转换成ArrayBuffer
-    reader.onload = (e: any) => {
-      spark.append(e.target.result)
-      const hash = spark.end();   // 文件内容的hash（5ee062942e1c969f1215859aff653268）
-    }
-  };
+  const [form] = Form.useForm();
+
+  const submit = () => {
+    const params = form.getFieldsValue(true);
+    console.log(params);
+  }
 
   return (
-    <div>
-      <input type="file" onChange={changeFile} />
-    </div>
+    <Form form={form}>
+      <Form.Item
+        label="名称"
+        name="name"
+      >
+        <Input />
+      </Form.Item>
+      <Form.Item
+        label="年龄"
+        name="age"
+      >
+        <Input />
+      </Form.Item>
+      <Button type='primary' onClick={submit}>提交</Button>
+    </Form>
   );
 };
 

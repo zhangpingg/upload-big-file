@@ -10,7 +10,7 @@
     "dev_server": "rm -rf target && nodemon index.js"
   },
   "dependencies": {
-    "antd": "^5.4.5",
+    "antd": "4.22.3",
     "express": "^4.18.2",
     "fs-extra": "^11.1.1",
     "multiparty": "^4.2.3",
