@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react';
 import { Form, Input, Button } from 'antd';
 import 'antd/dist/antd.css';
-import { request } from '@/utils/request';
+// import { request } from '@/utils/request';
+import request from "umi-request";
 
 // 表单（输入框+文件） FormData
 const Index = () => {
@@ -19,11 +20,11 @@ const Index = () => {
     formData.append('picName', 'pic');
     formData.append('pic', file);
     console.log(formData);
-    const res = await request({
-      url: `http://localhost:9000/submitForm`,
+    const res = await request('http://localhost:9000/submitForm', {
       method: 'post',
       data: formData
     })
+    console.log(res);
   }
 
   return (
