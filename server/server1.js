@@ -21,17 +21,16 @@ const getParamsData = (req) =>
 const pipeStream = (path, writeStream) => {
   return new Promise((resolve) => {
     const readStream = fs.createReadStream(path); // 读取切片文件流
-    // 文件读取完成
     readStream.on("end", () => {
-      fs.unlinkSync(path);  // 同步删除文件
+      fs.unlinkSync(path);
       resolve();
     });
     readStream.pipe(writeStream); // 读取的流，写进目的地的路径
   });
 };
 /** 合并切片 */
-const mergeFileChunk = async (filePath, fileName, size) => {
-  const chunkDir = path.resolve(UPLOAD_DIR, "chunkDir_" + fileName); // chunk目录路径
+const mergeFileChunk = async (filePath, fileHash, size) => {
+  const chunkDir = path.resolve(UPLOAD_DIR, `chunkDir_${fileHash}`); // chunk目录路径
   const chunkList = await fs.readdir(chunkDir);
   chunkList.sort((a, b) => a.split("-")[1] - b.split("-")[1]);
   chunkList.map((chunk, index) => {
@@ -60,8 +59,9 @@ server.on("request", async (req, res) => {
         }
         const [chunk] = files.chunk;
         const [hash] = fields.hash;
-        const [fileName] = fields.fileName;
-        const chunkDir = path.resolve(UPLOAD_DIR, "chunkDir_" + fileName);
+        // const [fileName] = fields.fileName;
+        const [fileHash] = fields.fileHash;
+        const chunkDir = path.resolve(UPLOAD_DIR, "chunkDir_" + fileHash);
         if (!fs.existsSync(chunkDir)) {
           await fs.mkdirs(chunkDir);
         }
@@ -72,9 +72,10 @@ server.on("request", async (req, res) => {
       break;
     case '/merge':
       const data = await getParamsData(req);
-      const { fileName, size } = data;
-      const filePath = path.resolve(UPLOAD_DIR, fileName);  //合并后的文件路径
-      await mergeFileChunk(filePath, fileName, size);
+      const { fileName, size, fileHash } = data;
+      const extension = path.parse(fileName).ext;
+      const filePath = path.resolve(UPLOAD_DIR, `${fileHash}${extension}`);  //合并后的文件路径
+      await mergeFileChunk(filePath, fileHash, size );
       res.writeHead(200, {
         "content-type": "application/json",
       });

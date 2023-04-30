@@ -12,6 +12,7 @@ const SIZE = 5 * 1024 * 1024; // 切片大小
 
 const Index = () => {
   const workerRef = useRef<Worker>();
+  const fileHashRef = useRef<any>();
   const [percent, setPercent] = useState<number>(0);
 
   /** 创建文件切片: File对象继承于Blob，所以可以用Blob.slice()方法将文件切成小块来处理 */
@@ -32,6 +33,7 @@ const Index = () => {
       data: JSON.stringify({
         fileName: fileName,
         size: SIZE,
+        fileHash: fileHashRef.current,
       })
     });
   }
@@ -42,6 +44,7 @@ const Index = () => {
         const formData = new FormData();        // 封装表单数据
         formData.append("chunk", item?.chunk);  // 切片
         formData.append("hash", item?.hash);    // 哈希
+        formData.append("fileHash", item.fileHash);  // 文件内容hash
         formData.append("fileName", fileName);  // 文件名
         return { formData };
       }).map((item: any) => {
@@ -81,10 +84,11 @@ const Index = () => {
     const file = e.target.files[0];  // 数组每个元素都是File对象
     const fileName = file.name;
     const fileChunkList = createFileChunk(file);
-    const fileHash = calculateHash(fileChunkList);
+    const fileHash = await calculateHash(fileChunkList);
+    fileHashRef.current = fileHash;
     const chunkData = fileChunkList.map((item, index) => ({
       chunk: item.file,
-      hash: `${fileName}-${index}`,  // 文件名+下标 Test.zip-0 Test.zip-1...
+      hash: `${fileHash}-${index}`,  // 文件名+下标 Test.zip-0 Test.zip-1...
       fileHash,
     }));
     await uploadChunks(chunkData, fileName);
