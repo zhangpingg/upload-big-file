@@ -1,7 +1,6 @@
 # 问题
 1. 服务端合并切片失败（fetch, axios有问题）(import { request } from 'umi')
 2. ArrayBuffer 二进制数据缓冲区
-3. readAsArrayBuffer 读取一个文件后，怎么下
 
 # 笔记
 二进制数据：只是一种数据格式（存储在内存当中）

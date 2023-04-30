@@ -26,10 +26,10 @@ server.on('request', (req, res) => {      // 监听接口请求
     'Content-Type': 'application/json',
   });
   if (req.url === '/submitForm') {
-    const form = new multiparty.Form(); // 创建一个表单解析器的实例
-    // form.parse()方法解析表单数据
+    const multipart = new multiparty.Form(); // 创建一个表单解析器的实例
+    // multipart.parse()方法解析表单数据
     // fields:表单中的文本字段  files:表单中上传的文件信息
-    form.parse(req, async (error, fields, files) => {
+    multipart.parse(req, async (error, fields, files) => {
       if (error) {
         console.log(error);
         response.writeHead(500, { 'Content-Type': 'text/plain' });
