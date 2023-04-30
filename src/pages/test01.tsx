@@ -2,15 +2,9 @@ import { useEffect } from "react";
 
 const Index = () => {
   useEffect(() => {
-    const formData = new FormData();
-    formData.append('a', '1')
-    formData.append('a', '2');
-    formData.append('b', '3')
-    formData.set('b', '4');
-    const valA = formData.getAll('a');
-    const valC = formData.getAll('b');
-    console.log(valA);  // ['1', '2']
-    console.log(valC);  // ['4']
+    const obj = new Buffer('abcd');
+    console.log(obj);            // <Buffer 61 62 63 64> 二进制数据
+    console.log(String(obj))     // abcd
   }, [])
 
   return (<div>11</div>)
