@@ -2,6 +2,7 @@
 1. 服务端合并切片失败（fetch, axios有问题）(import { request } from 'umi')
 2. ArrayBuffer 二进制数据缓冲区
 3. 恢复上传的时候，不能达到100%
+4. const chunkList = await fs.readdir(chunkDir);
 
 # 笔记
 二进制数据：只是一种数据格式（存储在内存当中）
