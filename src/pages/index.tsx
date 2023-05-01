@@ -5,13 +5,14 @@ import { request } from '@/utils/request';
 const SIZE = 5 * 1024 * 1024; // 切片大小
 
 const Index = () => {
-  const [file, setFile] = useState<File | undefined>();
-  const workerRef = useRef<Worker>();
-  const fileHashRef = useRef<any>('');
-  const requestListRef = useRef<any>([]); // 只保存正在上传切片的 xhr
-  const chunkDataRef = useRef<any[]>([]);
-  const uploadedNumRef = useRef<number>(0);
-  const [percent, setPercent] = useState<number>(0); // 计算文件内容的hash进度
+  const fileContainerRef = useRef<any>({
+    file: {},
+    worker: {}, // worker线程
+    fileHash: '', // 文件内容的hash
+    requestXhrList: [], // 正常上传切片的接口对象
+    uploadedNum: 0,   // 已上传切片的数量
+  });
+  const [hashPercent, setHashPercent] = useState<number>(0);
   const [uploadPercent, setUploadPercent] = useState(0);
 
   /** 创建文件切片: File对象继承于Blob，所以可以用Blob.slice()方法将文件切成小块来处理 */
@@ -26,21 +27,22 @@ const Index = () => {
   }
   /** 合并切片 */
   const mergeRequest = async () => {
+    const { file, fileHash } = fileContainerRef.current;
     await request({
       url: "http://localhost:8100/merge",
       method: 'post',
       data: JSON.stringify({
         fileName: file?.name,
         size: SIZE,
-        fileHash: fileHashRef.current,
+        fileHash,
       })
     });
   }
   /** 上传切片 */
   const uploadChunks = async (uploadedList = [] as any) => {
-    const list = chunkDataRef.current
-      .filter(({ hash }) => !uploadedList.includes(hash))
-    const requestList = list
+    const { file, chunkData, requestXhrList } = fileContainerRef.current;
+    const requestList = chunkData
+      .filter(({ hash }: any) => !uploadedList.includes(hash))
       .map((item: any) => {
         const formData = new FormData();        // 封装表单数据
         formData.append("chunk", item?.chunk);  // 切片
@@ -48,24 +50,24 @@ const Index = () => {
         formData.append("fileHash", item.fileHash);  // 文件内容hash
         formData.append("fileName", file?.name!);  // 文件名
         return { formData };
-      }).map(async (item: any, index) => {
+      }).map(async (item: any) => {
         const res: any = await request({
           url: "http://localhost:8100/upload",
           method: 'post',
           data: item.formData,
-          requestList: requestListRef.current,
+          requestList: requestXhrList,
         })
         const data = JSON.parse(res.data);
         if (data?.code === 1) {
-          uploadedNumRef.current++;
-          setUploadPercent(100 / chunkDataRef.current.length * uploadedNumRef.current);
+          fileContainerRef.current.uploadedNum++;
+          setUploadPercent(100 / chunkData.length * fileContainerRef.current.uploadedNum);
         }
         return data;
       }
       );
     await Promise.all(requestList); // 并发请求,上传所有的文件切片
     // 之前上传的切片数量 + 本次上传的切片数量 = 所有切片数量时合并切片
-    if (uploadedList.length + requestList.length === chunkDataRef.current.length) {
+    if (uploadedList.length + requestList.length === chunkData.length) {
       await mergeRequest();
     }
   }
@@ -73,15 +75,16 @@ const Index = () => {
   const calculateHash = (fileChunkList: any[]) => {
     return new Promise((resolve) => {
       // 主线程
-      workerRef.current = new Worker('/hash.js');
-      workerRef.current.postMessage({ fileChunkList });
-      workerRef.current.onmessage = (e) => {
+      const worker = new Worker('/hash.js');
+      worker.postMessage({ fileChunkList });
+      worker.onmessage = (e: any) => {
         const { percentage, hash } = e.data;
-        setPercent(percentage);
+        setHashPercent(percentage);
         if (hash) {
           resolve(hash);
         }
       }
+      fileContainerRef.current.worker = worker;
     })
   }
   /** 验证上传 */
@@ -98,10 +101,11 @@ const Index = () => {
   };
   /** 选择文件 */
   const changeFile = async (e: any) => {
-    setFile(e.target.files[0]) // 数组每个元素都是File对象
+    fileContainerRef.current.file = e.target.files[0];  // 数组每个元素都是File对象
   }
   /** 上传文件 */
   const uploadFile = async () => {
+    const { file } = fileContainerRef.current;
     if (!file) {
       message.info('请先上传文件');
       return;
@@ -113,30 +117,32 @@ const Index = () => {
       message.success('文件上传成功 (实际上服务器已经文件了，不需要上传，这里只是给客户看的假象)');
       return;
     }
-    fileHashRef.current = fileHash;
-    chunkDataRef.current = fileChunkList.map((item, index) => ({
+    fileContainerRef.current.chunkData = fileChunkList.map((item, index) => ({
       chunk: item.file,
-      hash: `${fileHash}-${index}`,  // 文件名+下标 xone.zip-0 xone.zip-1...
+      hash: `${fileHash}-${index}`,
       fileHash,
     }));
+    fileContainerRef.current.fileHash = fileHash;
     await uploadChunks(uploadedList);
   }
   /** 暂停上传 */
   const pauseUpload = () => {
-    requestListRef.current.forEach((xhr: any) => xhr?.abort()); // 取消请求
-    requestListRef.current = [];
+    const { requestXhrList } = fileContainerRef.current;
+    requestXhrList.forEach((xhr: any) => xhr?.abort()); // 取消请求
+    fileContainerRef.current.requestXhrList = [];
   }
   /** 恢复上传 */
   const resumeUpload = async () => {
+    const { file, fileHash } = fileContainerRef.current;
     if (!file) return;
-    const { uploadedList } = await verifyUpload(file.name, fileHashRef.current);
+    const { uploadedList } = await verifyUpload(file.name, fileHash);
     await uploadChunks(uploadedList);
   }
 
   return (
     <div>
       <input type="file" onChange={changeFile} />
-      <div>计算文件内容 hash 的进度：<Progress percent={percent} style={{ width: '400px' }} /></div>
+      <div>计算文件内容 hash 的进度：<Progress percent={hashPercent} style={{ width: '400px' }} /></div>
       <div>上传文件的进度：<Progress percent={uploadPercent} style={{ width: '400px' }} /></div>
       <Button onClick={uploadFile}>上传</Button>
       <Button onClick={pauseUpload}>暂停上传</Button>
