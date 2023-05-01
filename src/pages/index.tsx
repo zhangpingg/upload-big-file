@@ -22,15 +22,17 @@ const Index = () => {
   const fileHashRef = useRef<any>('');
   const requestListRef = useRef<any>([]); // 只保存正在上传切片的 xhr
   const chunkDataRef = useRef<any[]>([]);
+  const uploadedNumRef = useRef<number>(0);
   const [percent, setPercent] = useState<number>(0); // 计算文件内容的hash进度
+  // const [uploadPercent, setUploadPercent] = useState(0);
 
-  // const uploadPercentage = useMemo(() => {
-  //   if (!file || !chunkDataRef.current.length) return 0;
-  //   const loaded = chunkDataRef.current
-  //     .map(item => item.size * item.percentage)
-  //     .reduce((acc, cur) => acc + cur);
-  //   return parseInt((loaded / file.size).toFixed(2));
-  // }, []);
+  const uploadPercent = useMemo(() => {
+    if (chunkDataRef.current.length === 0) {
+      return 0;
+    }
+    const num = 100 / chunkDataRef.current.length * uploadedNumRef.current;
+    return num;
+  }, [chunkDataRef.current, uploadedNumRef.current])
   /** 创建文件切片: File对象继承于Blob，所以可以用Blob.slice()方法将文件切成小块来处理 */
   const createFileChunk = (file: File, size = SIZE) => {
     const fileChunkList = []; // 文件切片(二进制)数组
@@ -65,13 +67,18 @@ const Index = () => {
         formData.append("fileHash", item.fileHash);  // 文件内容hash
         formData.append("fileName", file?.name!);  // 文件名
         return { formData };
-      }).map((item: any) => {
-        return request({
+      }).map(async (item: any, index) => {
+        const res: any = await request({
           url: "http://localhost:8100/upload",
           method: 'post',
           data: item.formData,
           requestList: requestListRef.current,
         })
+        const data = JSON.parse(res.data);
+        if (data?.code === 1) {
+          uploadedNumRef.current++;
+        }
+        return data;
       }
       );
     await Promise.all(requestList); // 并发请求,上传所有的文件切片
@@ -121,7 +128,7 @@ const Index = () => {
     const fileHash = await calculateHash(fileChunkList);
     const { shouldUpload, uploadedList } = await verifyUpload(file.name, fileHash);
     if (!shouldUpload) {
-      message.success('file upload success');
+      message.success('文件上传成功 (实际上服务器已经文件了，不需要上传，这里只是给客户看的假象)');
       return;
     }
     fileHashRef.current = fileHash;
@@ -148,7 +155,7 @@ const Index = () => {
     <div>
       <input type="file" onChange={changeFile} />
       <div>计算文件内容 hash 的进度：<Progress percent={percent} style={{ width: '400px' }} /></div>
-      <div>上传文件的进度：？？？</div>
+      <div>上传文件的进度：{uploadPercent}</div>
       <Button onClick={uploadFile}>上传</Button>
       <Button onClick={pauseUpload}>暂停上传</Button>
       <Button type='primary' onClick={resumeUpload}>恢复上传</Button>

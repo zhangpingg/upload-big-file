@@ -10,9 +10,10 @@
     "dev_server": "rm -rf target && nodemon index.js"
   },
   "dependencies": {
+    "@types/fs-extra": "^8.0.1",
     "antd": "4.22.3",
     "express": "^4.18.2",
-    "fs-extra": "^11.1.1",
+    "fs-extra": "^8.1.0",
     "multiparty": "^4.2.3",
     "spark-md5": "^3.0.2",
     "umi": "^4.0.65",

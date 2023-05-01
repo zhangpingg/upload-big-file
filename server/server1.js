@@ -46,8 +46,9 @@ const getExtension = (fileName) => {
 }
 /** 已上传的所有切片名 */
 const createUploadedList = async (fileHash) => {
-  fs.existsSync(path.resolve(UPLOAD_DIR, fileHash))
-    ? await fs.readdir(path.resolve(UPLOAD_DIR, fileHash))
+  const chunkDir = path.resolve(UPLOAD_DIR, `chunkDir_${fileHash}`);
+  return fs.existsSync(chunkDir)
+    ? await fs.readdir(chunkDir)
     : [];
 }
 
@@ -70,13 +71,16 @@ server.on("request", async (req, res) => {
       const [hash] = fields.hash;
       // const [fileName] = fields.fileName;
       const [fileHash] = fields.fileHash;
-      const chunkDir = path.resolve(UPLOAD_DIR, "chunkDir_" + fileHash);
+      const chunkDir = path.resolve(UPLOAD_DIR, `chunkDir_${fileHash}`);
       if (!fs.existsSync(chunkDir)) {
         await fs.mkdirs(chunkDir);
       }
       // chunk.path 存储临时文件的路径
       await fs.move(chunk.path, `${chunkDir}/${hash}`); // 移动某个目录或文件
-      res.end("chunk upload success");
+      res.end(JSON.stringify({
+        code: 1,
+        message: "chunk upload success",
+      }));
     });
   } else if (req.url === '/merge') {
     const data = await getParamsData(req);
