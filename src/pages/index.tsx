@@ -1,10 +1,16 @@
-/** 流程步骤
- *  1)上传文件后,将文件切片
- *  2)上传所有的文件切片
- *  3)服务器接收到所有的切片,并合并切片
+/** 大文件上传
+ *  1)前端上传大文件时使用 Blob.prototype.slice 将文件切片，并发上传多个切片，
+ *    最后发送一个合并的请求通知服务端合并切片
+ *  2)服务端接收切片并存储，收到合并请求后使用流将切片合并到最终文件
+ */
+/** 断点续传
+ *  1)使用 spark-md5 根据文件内容算出文件 hash
+ *  2)通过 hash 可以判断服务端是否已经上传该文件，从而直接提示用户上传成功（秒传）
+ *  3)通过 XMLHttpRequest 的 abort 方法暂停切片的上传
+ *  4)上传前服务端返回已经上传的切片名，前端跳过这些切片的上传
  */
 
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Progress, message, Button } from 'antd';
 import { request } from '@/utils/request';
 
@@ -16,8 +22,15 @@ const Index = () => {
   const fileHashRef = useRef<any>('');
   const requestListRef = useRef<any>([]); // 只保存正在上传切片的 xhr
   const chunkDataRef = useRef<any[]>([]);
-  const [percent, setPercent] = useState<number>(0);
+  const [percent, setPercent] = useState<number>(0); // 计算文件内容的hash进度
 
+  // const uploadPercentage = useMemo(() => {
+  //   if (!file || !chunkDataRef.current.length) return 0;
+  //   const loaded = chunkDataRef.current
+  //     .map(item => item.size * item.percentage)
+  //     .reduce((acc, cur) => acc + cur);
+  //   return parseInt((loaded / file.size).toFixed(2));
+  // }, []);
   /** 创建文件切片: File对象继承于Blob，所以可以用Blob.slice()方法将文件切成小块来处理 */
   const createFileChunk = (file: File, size = SIZE) => {
     const fileChunkList = []; // 文件切片(二进制)数组
@@ -43,7 +56,7 @@ const Index = () => {
   /** 上传切片 */
   const uploadChunks = async (uploadedList = [] as any) => {
     const list = chunkDataRef.current
-    .filter(({ hash }) => !uploadedList.includes(hash))
+      .filter(({ hash }) => !uploadedList.includes(hash))
     const requestList = list
       .map((item: any) => {
         const formData = new FormData();        // 封装表单数据
@@ -63,7 +76,7 @@ const Index = () => {
       );
     await Promise.all(requestList); // 并发请求,上传所有的文件切片
     // 之前上传的切片数量 + 本次上传的切片数量 = 所有切片数量时合并切片
-    if(uploadedList.length + requestList.length === chunkDataRef.current.length){
+    if (uploadedList.length + requestList.length === chunkDataRef.current.length) {
       await mergeRequest();
     }
   }
