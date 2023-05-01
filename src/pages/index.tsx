@@ -6,7 +6,7 @@ const SIZE = 5 * 1024 * 1024; // 切片大小
 
 const Index = () => {
   const fileContainerRef = useRef<any>({
-    file: {},
+    file: null,
     worker: {}, // worker线程
     fileHash: '', // 文件内容的hash
     requestXhrList: [], // 正常上传切片的接口对象
@@ -138,6 +138,15 @@ const Index = () => {
     const { uploadedList } = await verifyUpload(file.name, fileHash);
     await uploadChunks(uploadedList);
   }
+  /** 删除服务器端存放切片的目录 */
+  const deleteChunkDir = async () => {
+    const res: any = await request({
+      url: "http://localhost:8100/delete",
+      method: 'post',
+    });
+    const data = JSON.parse(res?.data);
+    message.success(data.message);
+  }
 
   return (
     <div>
@@ -147,6 +156,7 @@ const Index = () => {
       <Button onClick={uploadFile}>上传</Button>
       <Button onClick={pauseUpload}>暂停上传</Button>
       <Button type='primary' onClick={resumeUpload}>恢复上传</Button>
+      <Button onClick={deleteChunkDir}>删除</Button>
     </div>
   );
 }

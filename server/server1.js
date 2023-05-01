@@ -114,6 +114,14 @@ server.on("request", async (req, res) => {
         })
       );
     }
+  } else if(req.url === '/delete'){
+    await fs.remove(path.resolve(UPLOAD_DIR));
+    res.end(
+      JSON.stringify({
+        code: 0,
+        message: "删除成功"
+      })
+    );
   }
 });
 
