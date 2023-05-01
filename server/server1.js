@@ -40,6 +40,16 @@ const mergeFileChunk = async (filePath, fileHash, size) => {
     );
   });
 };
+/** 获取扩展名 */
+const getExtension = (fileName) => {
+  return path.parse(fileName).ext;
+}
+/** 已上传的所有切片名 */
+const createUploadedList = async (fileHash) => {
+  fs.existsSync(path.resolve(UPLOAD_DIR, fileHash))
+    ? await fs.readdir(path.resolve(UPLOAD_DIR, fileHash))
+    : [];
+}
 
 server.on("request", async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -49,43 +59,57 @@ server.on("request", async (req, res) => {
     res.end();
     return;
   }
-  switch (req.url) {
-    case '/upload':
-      const multipart = new multiparty.Form();
-      multipart.parse(req, async (error, fields, files) => {
-        if (error) {
-          console.log(error);
-          return;
-        }
-        const [chunk] = files.chunk;
-        const [hash] = fields.hash;
-        // const [fileName] = fields.fileName;
-        const [fileHash] = fields.fileHash;
-        const chunkDir = path.resolve(UPLOAD_DIR, "chunkDir_" + fileHash);
-        if (!fs.existsSync(chunkDir)) {
-          await fs.mkdirs(chunkDir);
-        }
-        // chunk.path 存储临时文件的路径
-        await fs.move(chunk.path, `${chunkDir}/${hash}`); // 移动某个目录或文件
-        res.end("chunk upload success");
-      });
-      break;
-    case '/merge':
-      const data = await getParamsData(req);
-      const { fileName, size, fileHash } = data;
-      const extension = path.parse(fileName).ext;
-      const filePath = path.resolve(UPLOAD_DIR, `${fileHash}${extension}`);  //合并后的文件路径
-      await mergeFileChunk(filePath, fileHash, size );
-      res.writeHead(200, {
-        "content-type": "application/json",
-      });
+  if (req.url === '/upload') {
+    const multipart = new multiparty.Form();
+    multipart.parse(req, async (error, fields, files) => {
+      if (error) {
+        console.log(error);
+        return;
+      }
+      const [chunk] = files.chunk;
+      const [hash] = fields.hash;
+      // const [fileName] = fields.fileName;
+      const [fileHash] = fields.fileHash;
+      const chunkDir = path.resolve(UPLOAD_DIR, "chunkDir_" + fileHash);
+      if (!fs.existsSync(chunkDir)) {
+        await fs.mkdirs(chunkDir);
+      }
+      // chunk.path 存储临时文件的路径
+      await fs.move(chunk.path, `${chunkDir}/${hash}`); // 移动某个目录或文件
+      res.end("chunk upload success");
+    });
+  } else if (req.url === '/merge') {
+    const data = await getParamsData(req);
+    const { fileName, size, fileHash } = data;
+    const filePath = path.resolve(UPLOAD_DIR, `${fileHash}${getExtension(fileName)}`);  //合并后的文件路径
+    await mergeFileChunk(filePath, fileHash, size);
+    res.writeHead(200, {
+      "content-type": "application/json",
+    });
+    res.end(
+      JSON.stringify({
+        code: 0,
+        message: "文件合并成功",
+      })
+    );
+  } else if (req.url === '/verify') {
+    const data = await getParamsData(req);
+    const { fileName, fileHash } = data;
+    const filePath = path.resolve(UPLOAD_DIR, `${fileHash}${getExtension(fileName)}`)
+    if (fs.existsSync(filePath)) {
       res.end(
         JSON.stringify({
-          code: 0,
-          message: "文件合并成功",
+          shouldUpload: false
         })
       );
-      break;
+    } else {
+      res.end(
+        JSON.stringify({
+          shouldUpload: true,
+          uploadedList: await createUploadedList(fileHash),
+        })
+      );
+    }
   }
 });
 
