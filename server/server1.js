@@ -1,5 +1,5 @@
 const http = require("http");
-const fs = require("fs-extra");
+const fse = require("fse-extra");
 const multiparty = require("multiparty");
 const path = require("path");
 
@@ -20,9 +20,9 @@ const getParamsData = (req) =>
 /** 读取切片文件流, 合并到目标文件中 */
 const pipeStream = (path, writeStream) => {
   return new Promise((resolve) => {
-    const readStream = fs.createReadStream(path); // 读取切片文件流
+    const readStream = fse.createReadStream(path); // 读取切片文件流
     readStream.on("end", () => {
-      fs.unlinkSync(path);
+      fse.unlinkSync(path);
       resolve();
     });
     readStream.pipe(writeStream); // 读取的流，写进目的地的路径
@@ -31,12 +31,12 @@ const pipeStream = (path, writeStream) => {
 /** 合并切片 */
 const mergeFileChunk = async (filePath, fileHash, size) => {
   const chunkDir = path.resolve(UPLOAD_DIR, `chunkDir_${fileHash}`); // chunk目录路径
-  const chunkList = await fs.readdir(chunkDir);
+  const chunkList = await fse.readdir(chunkDir);
   chunkList.sort((a, b) => a.split("-")[1] - b.split("-")[1]);
   chunkList.map((chunk, index) => {
     pipeStream(
       path.resolve(chunkDir, chunk),
-      fs.createWriteStream(filePath, { start: index * size }),  // 创建一个可写流
+      fse.createWriteStream(filePath, { start: index * size }),  // 创建一个可写流
     );
   });
 };
@@ -47,8 +47,8 @@ const getExtension = (fileName) => {
 /** 已上传的所有切片名 */
 const createUploadedList = async (fileHash) => {
   const chunkDir = path.resolve(UPLOAD_DIR, `chunkDir_${fileHash}`);
-  return fs.existsSync(chunkDir)
-    ? await fs.readdir(chunkDir)
+  return fse.existsSync(chunkDir)
+    ? await fse.readdir(chunkDir)
     : [];
 }
 
@@ -72,11 +72,11 @@ server.on("request", async (req, res) => {
       // const [fileName] = fields.fileName;
       const [fileHash] = fields.fileHash;
       const chunkDir = path.resolve(UPLOAD_DIR, `chunkDir_${fileHash}`);
-      if (!fs.existsSync(chunkDir)) {
-        await fs.mkdirs(chunkDir);
+      if (!fse.existsSync(chunkDir)) {
+        await fse.mkdirs(chunkDir);
       }
       // chunk.path 存储临时文件的路径
-      await fs.move(chunk.path, `${chunkDir}/${hash}`); // 移动某个目录或文件
+      await fse.move(chunk.path, `${chunkDir}/${hash}`); // 移动某个目录或文件
       res.end(JSON.stringify({
         code: 1,
         message: "chunk upload success",
@@ -100,7 +100,7 @@ server.on("request", async (req, res) => {
     const data = await getParamsData(req);
     const { fileName, fileHash } = data;
     const filePath = path.resolve(UPLOAD_DIR, `${fileHash}${getExtension(fileName)}`)
-    if (fs.existsSync(filePath)) {
+    if (fse.existsSync(filePath)) {
       res.end(
         JSON.stringify({
           shouldUpload: false
@@ -115,7 +115,7 @@ server.on("request", async (req, res) => {
       );
     }
   } else if(req.url === '/delete'){
-    await fs.remove(path.resolve(UPLOAD_DIR));
+    await fse.remove(path.resolve(UPLOAD_DIR));
     res.end(
       JSON.stringify({
         code: 0,

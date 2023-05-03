@@ -71,7 +71,7 @@ const Index = () => {
       await mergeRequest();
     }
   }
-  /** 计算hash */
+  /** 计算hash (读取文件内容计算hash,非常耗时,所以使用worker多线程【或者requestIdleCallback】) */
   const calculateHash = (fileChunkList: any[]) => {
     return new Promise((resolve) => {
       // 主线程
