@@ -156,7 +156,7 @@ const Index = () => {
       <Button onClick={uploadFile}>上传</Button>
       <Button onClick={pauseUpload}>暂停上传</Button>
       <Button type='primary' onClick={resumeUpload}>恢复上传</Button>
-      <Button onClick={deleteChunkDir}>删除</Button>
+      <Button onClick={deleteChunkDir} title="删除服务器端存放切片的目录">删除</Button>
     </div>
   );
 }
