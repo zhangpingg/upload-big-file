@@ -1,0 +1,28 @@
+{
+  "private": true,
+  "author": "yafei.wei <yafei.wei@xuncetech.com>",
+  "scripts": {
+    "dev": "umi dev",
+    "build": "umi build",
+    "postinstall": "umi setup",
+    "setup": "umi setup",
+    "start": "npm run dev",
+    "dev_server": "rm -rf server/target1 && nodemon server/server1.js"
+  },
+  "dependencies": {
+    "@types/fs-extra": "^8.0.1",
+    "antd": "4.22.3",
+    "express": "^4.18.2",
+    "fs-extra": "^8.1.0",
+    "multiparty": "^4.2.3",
+    "spark-md5": "^3.0.2",
+    "umi": "^4.0.65",
+    "umi-request": "^1.4.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.33",
+    "@types/react-dom": "^18.0.11",
+    "nodemon": "^2.0.22",
+    "typescript": "^5.0.3"
+  }
+}
