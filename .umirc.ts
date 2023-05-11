@@ -2,7 +2,7 @@ import { defineConfig } from "umi";
 
 export default defineConfig({
   routes: [
-    { path: "/", component: "index" },
+    { path: "/", component: "uploadBigFile" },
     { path: "/formSmallFile", component: "formSmallFile" },
   ],
   npmClient: 'yarn'
