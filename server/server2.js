@@ -36,10 +36,9 @@ server.on('request', (req, res) => {      // 监听接口请求
         response.end('Internal server error');
         return;
       }
-      const fileName = fields['picName'][0];
-      const fileDir = path.resolve(UPLOAD_DIR, fileName + '_accept'); // 接收的文件流存储的目录
+      const fileDir = path.resolve(UPLOAD_DIR, 'accept'); // 接收的文件流存储的目录
       await fs.move(files[fields['picName']][0].path, `${fileDir}`); // 移动某个目录或文件
-      const filePath = path.resolve(UPLOAD_DIR, fileName + '_merge'); // 合并后的文件流目录
+      const filePath = path.resolve(UPLOAD_DIR, files[fields['picName']][0]['originalFilename']); // 合并后的文件流目录
       pipeStream(
         fileDir,
         fs.createWriteStream(filePath),  // 创建一个可写流
