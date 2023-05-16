@@ -5,7 +5,6 @@
 /src/.umi
 /src/.umi-production
 /src/.umi-test
-/dist
 /server/target1
 /server/target2
 .swc
