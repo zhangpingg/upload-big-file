@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Form, Input, Button } from 'antd';
-import 'antd/dist/antd.css';
 import request from "umi-request";
 
 // 表单（输入框+文件） FormData
