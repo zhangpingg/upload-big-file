@@ -29,7 +29,7 @@ const Index = () => {
   const mergeRequest = async () => {
     const { file, fileHash } = fileContainerRef.current;
     await request({
-      url: "http://localhost:8100/merge",
+      url: "http://localhost:9002/merge",
       method: 'post',
       data: JSON.stringify({
         fileName: file?.name,
@@ -52,7 +52,7 @@ const Index = () => {
         return { formData };
       }).map(async (item: any) => {
         const res: any = await request({
-          url: "http://localhost:8100/upload",
+          url: "http://localhost:9002/upload",
           method: 'post',
           data: item.formData,
           requestList: requestXhrList,
@@ -90,7 +90,7 @@ const Index = () => {
   /** 验证上传 */
   const verifyUpload = async (fileName: string, fileHash: string | unknown) => {
     const res: any = await request({
-      url: "http://localhost:8100/verify",
+      url: "http://localhost:9002/verify",
       method: 'post',
       data: JSON.stringify({
         fileName,
@@ -141,7 +141,7 @@ const Index = () => {
   /** 删除服务器端存放切片的目录 */
   const deleteChunkDir = async () => {
     const res: any = await request({
-      url: "http://localhost:8100/delete",
+      url: "http://localhost:9002/delete",
       method: 'post',
     });
     const data = JSON.parse(res?.data);

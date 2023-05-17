@@ -18,7 +18,7 @@ const Index = () => {
     formData.append('picName', 'pic');
     formData.append('pic', file);
     console.log(formData);
-    const res = await request('http://localhost:9000/submitForm', {
+    const res = await request('http://localhost:9001/submitForm', {
       method: 'post',
       data: formData
     })
