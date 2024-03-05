@@ -11,5 +11,5 @@
   3)通过 XMLHttpRequest 的 abort 方法暂停切片的上传
   4)上传前服务端返回已经上传的切片名，前端跳过这些切片的上传
 
-地址：https://juejin.cn/post/6844904046436843527?spm=a2c6h.12873639.article-detail.7.5d82753dJfmthy#heading-3
+参考：https://juejin.cn/post/6844904046436843527?spm=a2c6h.12873639.article-detail.7.5d82753dJfmthy#heading-3
 ```
